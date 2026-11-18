@@ -1,0 +1,874 @@
+# Meow Clicker Ultimate
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Meow Clicker Ultimate</title>
+    <style>
+        :root {
+            --primary: #ff7675;
+            --primary-light: #fab1a0;
+            --secondary: #74b9ff;
+            --bg-gradient: linear-gradient(135deg, #ffeaa7 0%, #fab1a0 100%);
+            --panel-bg: rgba(255, 255, 255, 0.75);
+            --text-main: #2d3436;
+            --text-muted: #636e72;
+            --shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
+            --border: 1px solid rgba(255, 255, 255, 0.4);
+        }
+
+        [data-theme="dark"] {
+            --primary: #ff7675;
+            --primary-light: #e17055;
+            --secondary: #0984e3;
+            --bg-gradient: linear-gradient(135deg, #2d3436 0%, #000000 100%);
+            --panel-bg: rgba(45, 52, 54, 0.85);
+            --text-main: #dfe6e9;
+            --text-muted: #b2bec3;
+            --shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.4);
+            --border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+            -webkit-user-select: none;
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            background: var(--bg-gradient);
+            background-attachment: fixed;
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            transition: background 0.3s ease;
+        }
+
+        .game-container {
+            width: 100%;
+            max-width: 1100px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+            min-height: 80vh;
+        }
+
+        @media (max-width: 768px) {
+            .game-container {
+                grid-template-columns: 1fr;
+            }
+            body {
+                padding: 10px;
+            }
+        }
+
+        /* Glassmorphism Panels */
+        .panel {
+            background: var(--panel-bg);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-radius: 24px;
+            border: var(--border);
+            box-shadow: var(--shadow);
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Left Side: Clicker Area */
+        .clicker-area {
+            align-items: center;
+            justify-content: space-between;
+            text-align: center;
+        }
+
+        .stats-header {
+            margin-bottom: 20px;
+        }
+
+        .meow-count {
+            font-size: 3rem;
+            font-weight: 800;
+            color: var(--primary);
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.05);
+            word-break: break-word;
+        }
+
+        .mps-count {
+            font-size: 1.1rem;
+            color: var(--text-muted);
+            margin-top: 4px;
+            font-weight: 600;
+        }
+
+        .cat-stage {
+            position: relative;
+            width: 280px;
+            height: 280px;
+            margin: auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+        }
+
+        .cat-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 50%;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+            border: 6px solid white;
+            transition: transform 0.05s ease;
+        }
+
+        .cat-stage:active .cat-image {
+            transform: scale(0.92);
+        }
+
+        /* Right Side: Dashboard Tabs */
+        .tabs-nav {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 16px;
+            border-bottom: 2px solid rgba(0,0,0,0.05);
+            padding-bottom: 8px;
+            overflow-x: auto;
+        }
+
+        .tab-btn {
+            background: none;
+            border: none;
+            padding: 10px 16px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            cursor: pointer;
+            border-radius: 12px;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+        }
+
+        .tab-btn.active {
+            background: var(--primary);
+            color: white;
+        }
+
+        .tab-btn:hover:not(.active) {
+            background: rgba(0,0,0,0.04);
+            color: var(--text-main);
+        }
+
+        .tab-content {
+            flex: 1;
+            display: none;
+            flex-direction: column;
+            overflow-y: auto;
+            max-height: 500px;
+            padding-right: 4px;
+        }
+
+        .tab-content.active {
+            display: flex;
+        }
+
+        /* Upgrade Items */
+        .upgrade-item {
+            background: rgba(255, 255, 255, 0.4);
+            border: var(--border);
+            border-radius: 16px;
+            padding: 14px;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+
+        [data-theme="dark"] .upgrade-item {
+            background: rgba(255, 255, 255, 0.03);
+        }
+
+        .upgrade-item:hover {
+            transform: translateY(-2px);
+            background: rgba(255, 255, 255, 0.6);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        }
+
+        .upgrade-item.disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .upgrade-info {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            text-align: left;
+        }
+
+        .upgrade-title {
+            font-weight: 700;
+            font-size: 1.05rem;
+        }
+
+        .upgrade-effect {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+
+        .upgrade-meta {
+            text-align: right;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 4px;
+        }
+
+        .upgrade-cost {
+            font-weight: 700;
+            color: #27ae60;
+        }
+
+        .upgrade-count {
+            background: var(--secondary);
+            color: white;
+            padding: 2px 8px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: bold;
+        }
+
+        /* Skins Grid */
+        .skins-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+        }
+
+        .skin-card {
+            background: rgba(255, 255, 255, 0.4);
+            border: var(--border);
+            border-radius: 16px;
+            padding: 12px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        [data-theme="dark"] .skin-card {
+            background: rgba(255, 255, 255, 0.03);
+        }
+
+        .skin-card:hover {
+            transform: scale(1.02);
+        }
+
+        .skin-card.active {
+            border: 2px solid var(--primary);
+            background: rgba(255, 118, 117, 0.1);
+        }
+
+        .skin-preview {
+            width: 80px;
+            height: 80px;
+            object-fit: cover;
+            border-radius: 50%;
+            margin-bottom: 8px;
+            border: 3px solid white;
+        }
+
+        .skin-name {
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+
+        .skin-status {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-top: 4px;
+        }
+
+        /* Achievements list */
+        .achievement-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: rgba(255, 255, 255, 0.3);
+            padding: 12px;
+            border-radius: 14px;
+            margin-bottom: 8px;
+            border: var(--border);
+        }
+
+        [data-theme="dark"] .achievement-row {
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .achievement-row.locked {
+            opacity: 0.5;
+        }
+
+        .achievement-icon {
+            font-size: 1.5rem;
+        }
+
+        .achievement-details {
+            text-align: left;
+        }
+
+        .achievement-name {
+            font-weight: 700;
+            font-size: 0.95rem;
+        }
+
+        .achievement-desc {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        /* Floating numbers */
+        .floating-num {
+            position: absolute;
+            pointer-events: none;
+            font-weight: 800;
+            font-size: 1.5rem;
+            color: var(--primary);
+            animation: floatUp 0.8s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+            text-shadow: 1px 1px 3px rgba(0,0,0,0.2);
+            z-index: 10;
+        }
+
+        @keyframes floatUp {
+            0% {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+            100% {
+                opacity: 0;
+                transform: translateY(-100px) scale(0.8);
+            }
+        }
+
+        /* Utility Notification Bar */
+        .toast-banner {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            background: #2d3436;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 30px;
+            font-weight: 600;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            z-index: 100;
+        }
+
+        .toast-banner.show {
+            transform: translateX(-50%) translateY(0);
+        }
+
+        /* Settings configuration elements */
+        .settings-group {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+
+        .settings-label {
+            font-weight: 700;
+            margin-bottom: 8px;
+            display: block;
+        }
+
+        .btn-action {
+            background: var(--secondary);
+            color: white;
+            border: none;
+            padding: 10px 16px;
+            border-radius: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-right: 8px;
+            margin-bottom: 8px;
+            transition: background 0.2s ease;
+        }
+
+        .btn-action:hover {
+            opacity: 0.9;
+        }
+
+        .btn-danger {
+            background: #d63031;
+        }
+
+        textarea.save-box {
+            width: 100%;
+            height: 60px;
+            border-radius: 12px;
+            border: 1px solid rgba(0,0,0,0.1);
+            padding: 8px;
+            font-family: monospace;
+            font-size: 0.8rem;
+            margin-top: 8px;
+            resize: none;
+            background: rgba(255,255,255,0.5);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="game-container">
+        <!-- LEFT: CLICKER PANEL -->
+        <div class="panel clicker-area">
+            <div class="stats-header">
+                <div class="meow-count" id="meow-display">0 Meows</div>
+                <div class="mps-count" id="mps-display">per second: 0.0</div>
+            </div>
+
+            <div class="cat-stage" id="cat-click-target">
+                <img id="main-cat-asset" src="https://images.unsplash.com/photo-1592194996308-7b43878e84a6?fm=jpg&q=60&w=3000&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=NHwxMjA3fDA%3D" alt="Clickable Cat" class="cat-image">
+            </div>
+
+            <div style="margin-top: 15px; font-size: 0.85rem; color: var(--text-muted); font-weight: 600;">
+                Tip: Buy Upgrades and unlock unique Cat skins!
+            </div>
+        </div>
+
+        <!-- RIGHT: CONTROL DASHBOARD -->
+        <div class="panel">
+            <div class="tabs-nav">
+                <button class="tab-btn active" onclick="switchTab('upgrades')">Upgrades</button>
+                <button class="tab-btn" onclick="switchTab('skins')">Skins</button>
+                <button class="tab-btn" onclick="switchTab('achievements')">Achievements</button>
+                <button class="tab-btn" onclick="switchTab('settings')">Settings</button>
+            </div>
+
+            <!-- UPGRADES TAB -->
+            <div id="tab-upgrades" class="tab-content active">
+                <div id="upgrades-list"></div>
+            </div>
+
+            <!-- SKINS TAB -->
+            <div id="tab-skins" class="tab-content">
+                <div class="skins-grid" id="skins-list"></div>
+            </div>
+
+            <!-- ACHIEVEMENTS TAB -->
+            <div id="tab-achievements" class="tab-content">
+                <div id="achievements-list"></div>
+            </div>
+
+            <!-- SETTINGS TAB -->
+            <div id="tab-settings" class="tab-content">
+                <div class="settings-group">
+                    <span class="settings-label">Sound & Theme Toggle</span>
+                    <button class="btn-action" id="toggle-sound-btn" onclick="toggleSound()">Sound: ON</button>
+                    <button class="btn-action" id="toggle-theme-btn" onclick="toggleTheme()">Theme: Light</button>
+                </div>
+                <div class="settings-group">
+                    <span class="settings-label">Backup Safe Save State</span>
+                    <button class="btn-action" onclick="exportData()">Export Save String</button>
+                    <button class="btn-action" onclick="importData()">Import Save String</button>
+                    <textarea id="save-transfer-io" class="save-box" placeholder="Exported save data will appear here... or paste here to import."></textarea>
+                </div>
+                <div class="settings-group" style="margin-top: auto;">
+                    <span class="settings-label">Danger Zone</span>
+                    <button class="btn-action btn-danger" onclick="confirmReset()">Wipe Progress Data</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification Banner Box -->
+    <div class="toast-banner" id="toast-notif">State updated successfully!</div>
+
+    <script>
+        // Game Logic State Variable Map
+        let state = {
+            meows: 0,
+            totalClicks: 0,
+            mps: 0,
+            clickPower: 1,
+            soundEnabled: true,
+            darkTheme: false,
+            upgrades: {
+                yarn: { count: 0, baseCost: 15, currentCost: 15, mpsAdded: 0.1, label: "Soft Yarn Ball" },
+                catnip: { count: 0, baseCost: 100, currentCost: 100, mpsAdded: 1, label: "Fresh Catnip Patch" },
+                milk: { count: 0, baseCost: 1100, currentCost: 1100, mpsAdded: 8, label: "Premium Milk Bowl" },
+                condo: { count: 0, baseCost: 12000, currentCost: 12000, mpsAdded: 47, label: "Deluxe Cat Condo" },
+                laser: { count: 0, baseCost: 130000, currentCost: 130000, mpsAdded: 260, label: "Laser Pointer Matrix" }
+            },
+            skins: {
+                shorthair: { owned: true, cost: 0, active: true, asset: "https://images.unsplash.com/photo-1592194996308-7b43878e84a6?fm=jpg&q=60&w=3000&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=NHwxMjA3fDA%3D", title: "British Shorthair" },
+                sunglasses: { owned: false, cost: 500, active: false, asset: "https://images.unsplash.com/photo-1533738363-b7f9aef128ce?fm=jpg&q=60&w=3000&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=NHwxMjA3fDA%3D", title: "Cool Shades Cat" },
+                calico: { owned: false, cost: 5000, active: false, asset: "https://images.unsplash.com/photo-1780510792470-acd591281c15?fm=jpg&q=60&w=3000&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=NHwxMjA3fDA%3D", title: "Calico Cutie" },
+                goldie: { owned: false, cost: 25000, active: false, asset: "https://images.unsplash.com/photo-1771795428713-bea51552c34e?fm=jpg&q=60&w=3000&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=NHwxMjA3fDA%3D", title: "Golden Companion" }
+            },
+            achievements: {
+                first: { reached: false, threshold: 1, type: "meows", title: "Baby Steps", desc: "Meow for the very first time." },
+                hundred: { reached: false, threshold: 100, type: "meows", title: "Kitten Clique", desc: "Amass a balance of 100 total Meows." },
+                clicker_pro: { reached: false, threshold: 50, type: "clicks", title: "Hyper Tapper", desc: "Tap the kitty 50 unique times." },
+                tycoon: { reached: false, threshold: 10000, type: "meows", title: "Feline Monarch", desc: "Reach a grand total of 10,000 Meows." }
+            }
+        };
+
+        // Synthesize audio signals natively via audio context without sound file dependency
+        function soundChimeEffect(pitch, duration) {
+            if (!state.soundEnabled) return;
+            try {
+                const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                const osc = ctx.createOscillator();
+                const gainNode = ctx.createGain();
+                osc.connect(gainNode);
+                gainNode.connect(ctx.destination);
+                
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(pitch, ctx.currentTime);
+                gainNode.gain.setValueAtTime(0.08, ctx.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duration);
+                
+                osc.start();
+                osc.stop(ctx.currentTime + duration);
+            } catch (err) {}
+        }
+
+        // Initialize and setup view handlers
+        window.onload = function() {
+            loadGameData();
+            renderUpgrades();
+            renderSkins();
+            renderAchievements();
+            recalcMPS();
+            updateUI();
+            
+            // Loop for interval accumulation of ticks (10 times per second for smooth frame intervals)
+            setInterval(() => {
+                if (state.mps > 0) {
+                    state.meows += (state.mps / 10);
+                    checkAchievements();
+                    updateUI();
+                }
+            }, 100);
+
+            // Periodically auto-save state
+            setInterval(() => {
+                saveGameData();
+            }, 15000);
+
+            // Register main click listener
+            document.getElementById('cat-click-target').addEventListener('mousedown', function(e) {
+                handleCatClick(e);
+            });
+        };
+
+        function updateUI() {
+            document.getElementById('meow-display').innerText = Math.floor(state.meows).toLocaleString() + " Meows";
+            document.getElementById('mps-display').innerText = `per second: ${state.mps.toFixed(1)}`;
+            
+            // Check status bounds on items
+            for (let id in state.upgrades) {
+                const row = document.getElementById(`upgrade-row-${id}`);
+                if (row) {
+                    if (state.meows >= state.upgrades[id].currentCost) {
+                        row.classList.remove('disabled');
+                    } else {
+                        row.classList.add('disabled');
+                    }
+                }
+            }
+        }
+
+        function handleCatClick(e) {
+            state.meows += state.clickPower;
+            state.totalClicks += 1;
+            
+            soundChimeEffect(523.25, 0.08); // C5 note sound
+            createFloatingNumber(e);
+            checkAchievements();
+            updateUI();
+        }
+
+        function createFloatingNumber(e) {
+            const stage = document.getElementById('cat-click-target');
+            const rect = stage.getBoundingClientRect();
+            
+            // Coordinates relative to stage container
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            
+            const num = document.createElement('div');
+            num.className = 'floating-num';
+            num.innerText = `+${state.clickPower}`;
+            num.style.left = `${x}px`;
+            num.style.top = `${y}px`;
+            
+            stage.appendChild(num);
+            setTimeout(() => num.remove(), 800);
+        }
+
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(cont => cont.classList.remove('active'));
+            
+            event.target.classList.add('active');
+            document.getElementById(`tab-${tabId}`).classList.add('active');
+        }
+
+        function renderUpgrades() {
+            const container = document.getElementById('upgrades-list');
+            container.innerHTML = '';
+            
+            for (let id in state.upgrades) {
+                const item = state.upgrades[id];
+                const div = document.createElement('div');
+                div.id = `upgrade-row-${id}`;
+                div.className = 'upgrade-item disabled';
+                div.onclick = () => buyUpgrade(id);
+                
+                div.innerHTML = `
+                    <div class="upgrade-info">
+                        <span class="upgrade-title">${item.label}</span>
+                        <span class="upgrade-effect">+${item.mpsAdded} MPS each</span>
+                    </div>
+                    <div class="upgrade-meta">
+                        <span class="upgrade-cost" id="cost-label-${id}">${Math.floor(item.currentCost)} Meows</span>
+                        <span class="upgrade-count" id="count-label-${id}">x${item.count}</span>
+                    </div>
+                `;
+                container.appendChild(div);
+            }
+        }
+
+        function buyUpgrade(id) {
+            const item = state.upgrades[id];
+            if (state.meows >= item.currentCost) {
+                state.meows -= item.currentCost;
+                item.count += 1;
+                item.currentCost = item.baseCost * Math.pow(1.15, item.count);
+                
+                soundChimeEffect(659.25, 0.12); // E5 note purchase chime
+                recalcMPS();
+                renderUpgrades();
+                updateUI();
+            }
+        }
+
+        function recalcMPS() {
+            let totalMps = 0;
+            for (let id in state.upgrades) {
+                totalMps += state.upgrades[id].count * state.upgrades[id].mpsAdded;
+            }
+            state.mps = totalMps;
+            // Upgrade tapping impact incrementally with passive accumulation tiers
+            state.clickPower = 1 + Math.floor(totalMps * 0.1);
+        }
+
+        function renderSkins() {
+            const grid = document.getElementById('skins-list');
+            grid.innerHTML = '';
+            
+            for (let key in state.skins) {
+                const skin = state.skins[key];
+                const card = document.createElement('div');
+                card.className = `skin-card ${skin.active ? 'active' : ''}`;
+                card.onclick = () => handleSkinInteract(key);
+                
+                let subtext = skin.owned ? "Owned (Click to use)" : `Cost: ${skin.cost} Meows`;
+                if (skin.active) subtext = "Equipped";
+
+                card.innerHTML = `
+                    <img src="${skin.asset}" class="skin-preview" alt="Skin View">
+                    <div class="skin-name">${skin.title}</div>
+                    <div class="skin-status">${subtext}</div>
+                `;
+                grid.appendChild(card);
+            }
+        }
+
+        function handleSkinInteract(key) {
+            const skin = state.skins[key];
+            if (skin.owned) {
+                for (let k in state.skins) state.skins[k].active = false;
+                skin.active = true;
+                document.getElementById('main-cat-asset').src = skin.asset;
+                soundChimeEffect(783.99, 0.1);
+                renderSkins();
+            } else {
+                if (state.meows >= skin.cost) {
+                    state.meows -= skin.cost;
+                    skin.owned = true;
+                    showToastNotification(`Unlocked skin: ${skin.title}!`);
+                    renderSkins();
+                    updateUI();
+                } else {
+                    showToastNotification("Not enough Meows to acquire this skin!");
+                }
+            }
+        }
+
+        function renderAchievements() {
+            const container = document.getElementById('achievements-list');
+            container.innerHTML = '';
+            
+            for (let id in state.achievements) {
+                const ach = state.achievements[id];
+                const row = document.createElement('div');
+                row.className = `achievement-row ${ach.reached ? '' : 'locked'}`;
+                
+                row.innerHTML = `
+                    <span class="achievement-icon">${ach.reached ? '🏆' : '🔒'}</span>
+                    <div class="achievement-details">
+                        <span class="achievement-name">${ach.title}</span><br/>
+                        <span class="achievement-desc">${ach.desc}</span>
+                    </div>
+                `;
+                container.appendChild(row);
+            }
+        }
+
+        function checkAchievements() {
+            let changes = false;
+            for (let id in state.achievements) {
+                const ach = state.achievements[id];
+                if (!ach.reached) {
+                    if (ach.type === 'meows' && state.meows >= ach.threshold) {
+                        ach.reached = true;
+                        changes = true;
+                        showToastNotification(`Achievement unlocked: ${ach.title}`);
+                    }
+                    if (ach.type === 'clicks' && state.totalClicks >= ach.threshold) {
+                        ach.reached = true;
+                        changes = true;
+                        showToastNotification(`Achievement unlocked: ${ach.title}`);
+                    }
+                }
+            }
+            if (changes) renderAchievements();
+        }
+
+        function showToastNotification(text) {
+            const el = document.getElementById('toast-notif');
+            el.innerText = text;
+            el.classList.add('show');
+            setTimeout(() => el.classList.remove('show'), 3000);
+        }
+
+        function toggleSound() {
+            state.soundEnabled = !state.soundEnabled;
+            document.getElementById('toggle-sound-btn').innerText = `Sound: ${state.soundEnabled ? 'ON' : 'OFF'}`;
+        }
+
+        function toggleTheme() {
+            state.darkTheme = !state.darkTheme;
+            if (state.darkTheme) {
+                document.documentElement.setAttribute('data-theme', 'dark');
+                document.getElementById('toggle-theme-btn').innerText = "Theme: Dark";
+            } else {
+                document.documentElement.removeAttribute('data-theme');
+                document.getElementById('toggle-theme-btn').innerText = "Theme: Light";
+            }
+        }
+
+        function saveGameData() {
+            localStorage.setItem('meow_clicker_save', JSON.stringify(state));
+        }
+
+        function loadGameData() {
+            const data = localStorage.getItem('meow_clicker_save');
+            if (data) {
+                try {
+                    const parsed = JSON.parse(data);
+                    // Merge fields carefully to ensure backwards compatibility updates
+                    if (typeof parsed.meows === 'number') state.meows = parsed.meows;
+                    if (typeof parsed.totalClicks === 'number') state.totalClicks = parsed.totalClicks;
+                    if (parsed.upgrades) {
+                        for (let k in parsed.upgrades) {
+                            if (state.upgrades[k]) {
+                                state.upgrades[k].count = parsed.upgrades[k].count || 0;
+                                state.upgrades[k].currentCost = parsed.upgrades[k].currentCost || state.upgrades[k].baseCost;
+                            }
+                        }
+                    }
+                    if (parsed.skins) {
+                        for (let k in parsed.skins) {
+                            if (state.skins[k]) {
+                                state.skins[k].owned = parsed.skins[k].owned;
+                                state.skins[k].active = parsed.skins[k].active;
+                                if (state.skins[k].active) {
+                                    document.getElementById('main-cat-asset').src = state.skins[k].asset;
+                                }
+                            }
+                        }
+                    }
+                    if (parsed.achievements) {
+                        for (let k in parsed.achievements) {
+                            if (state.achievements[k]) state.achievements[k].reached = parsed.achievements[k].reached;
+                        }
+                    }
+                } catch (e) {
+                    console.error("Error loading save file fallback", e);
+                }
+            }
+        }
+
+        function exportData() {
+            saveGameData();
+            const rawStr = btoa(JSON.stringify(state));
+            const ioBox = document.getElementById('save-transfer-io');
+            ioBox.value = rawStr;
+            ioBox.select();
+            document.execCommand('copy');
+            showToastNotification("Save string copied to clipboard!");
+        }
+
+        function importData() {
+            const ioBox = document.getElementById('save-transfer-io');
+            const rawStr = ioBox.value.trim();
+            if (!rawStr) {
+                showToastNotification("Please paste a valid save string first!");
+                return;
+            }
+            try {
+                const decrypted = atob(rawStr);
+                JSON.parse(decrypted); // validation check
+                localStorage.setItem('meow_clicker_save', decrypted);
+                loadGameData();
+                recalcMPS();
+                renderUpgrades();
+                renderSkins();
+                renderAchievements();
+                updateUI();
+                showToastNotification("Save state imported successfully!");
+            } catch (err) {
+                showToastNotification("Invalid save string format provided!");
+            }
+        }
+
+        function confirmReset() {
+            const el = document.getElementById('toast-notif');
+            // Safely replace modal alerts using interactive prompts
+            if (confirm("Are you absolutely sure you want to delete all cat clicker progress data?")) {
+                localStorage.removeItem('meow_clicker_save');
+                window.location.reload();
+            }
+        }
+    </script>
+</body>
+</html>
+
+
